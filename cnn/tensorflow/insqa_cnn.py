@@ -96,28 +96,28 @@ class InsQACNN(object):
                 )
                 pooled_outputs_3.append(pooled)
         num_filters_total = num_filters * len(filter_sizes)
-        pooled_reshape_1 = tf.reshape(tf.concat(3, pooled_outputs_1), [-1, num_filters_total])
-        pooled_reshape_2 = tf.reshape(tf.concat(3, pooled_outputs_2), [-1, num_filters_total])
-        pooled_reshape_3 = tf.reshape(tf.concat(3, pooled_outputs_3), [-1, num_filters_total])
+        pooled_reshape_1 = tf.reshape(tf.concat(pooled_outputs_1, axis=3), [-1, num_filters_total])
+        pooled_reshape_2 = tf.reshape(tf.concat(pooled_outputs_2, axis=3), [-1, num_filters_total])
+        pooled_reshape_3 = tf.reshape(tf.concat(pooled_outputs_3, axis=3), [-1, num_filters_total])
         # dropout
         pooled_flat_1 = tf.nn.dropout(pooled_reshape_1, self.dropout_keep_prob)
         pooled_flat_2 = tf.nn.dropout(pooled_reshape_2, self.dropout_keep_prob)
         pooled_flat_3 = tf.nn.dropout(pooled_reshape_3, self.dropout_keep_prob)
 
-        pooled_len_1 = tf.sqrt(tf.reduce_sum(tf.mul(pooled_flat_1, pooled_flat_1), 1))  # 计算向量长度Batch模式
-        pooled_len_2 = tf.sqrt(tf.reduce_sum(tf.mul(pooled_flat_2, pooled_flat_2), 1))
-        pooled_len_3 = tf.sqrt(tf.reduce_sum(tf.mul(pooled_flat_3, pooled_flat_3), 1))
-        pooled_mul_12 = tf.reduce_sum(tf.mul(pooled_flat_1, pooled_flat_2), 1)  # 计算向量的点乘Batch模式
-        pooled_mul_13 = tf.reduce_sum(tf.mul(pooled_flat_1, pooled_flat_3), 1)
+        pooled_len_1 = tf.sqrt(tf.reduce_sum(tf.multiply(pooled_flat_1, pooled_flat_1), 1))  # 计算向量长度Batch模式
+        pooled_len_2 = tf.sqrt(tf.reduce_sum(tf.multiply(pooled_flat_2, pooled_flat_2), 1))
+        pooled_len_3 = tf.sqrt(tf.reduce_sum(tf.multiply(pooled_flat_3, pooled_flat_3), 1))
+        pooled_mul_12 = tf.reduce_sum(tf.multiply(pooled_flat_1, pooled_flat_2), 1)  # 计算向量的点乘Batch模式
+        pooled_mul_13 = tf.reduce_sum(tf.multiply(pooled_flat_1, pooled_flat_3), 1)
 
         with tf.name_scope("output"):
-            self.cos_12 = tf.div(pooled_mul_12, tf.mul(pooled_len_1, pooled_len_2), name="scores")  # 计算向量夹角Batch模式
-            self.cos_13 = tf.div(pooled_mul_13, tf.mul(pooled_len_1, pooled_len_3))
+            self.cos_12 = tf.div(pooled_mul_12, tf.multiply(pooled_len_1, pooled_len_2), name="scores")  # 计算向量夹角Batch模式
+            self.cos_13 = tf.div(pooled_mul_13, tf.multiply(pooled_len_1, pooled_len_3))
 
         zero = tf.constant(0, shape=[batch_size], dtype=tf.float32)
         margin = tf.constant(0.05, shape=[batch_size], dtype=tf.float32)
         with tf.name_scope("loss"):
-            self.losses = tf.maximum(zero, tf.sub(margin, tf.sub(self.cos_12, self.cos_13)))
+            self.losses = tf.maximum(zero, tf.subtract(margin, tf.subtract(self.cos_12, self.cos_13)))
             self.loss = tf.reduce_sum(self.losses) + l2_reg_lambda * l2_loss
             print('loss ', self.loss)
 
