@@ -26,7 +26,7 @@ def build_vocab():
     code, vocab = int(0), {}
     vocab['UNKNOWN'] = code
     code += 1
-    for line in open('/export/jw/cnn/insuranceQA/train'):
+    for line in open('/export/jw/cnn/insuranceQA_old/train'):
         items = line.strip().split(' ')
         for i in range(2, 3):
             for word in items[i].split('_'):
@@ -39,7 +39,7 @@ def build_vocab():
 
 def load_vectors():
     vectors = {}
-    for line in open('/export/jw/cnn/insuranceQA/vectors.nobin'):
+    for line in open('/export/jw/cnn/insuranceQA_old/vectors.nobin'):
         items = line.strip().split(' ')
         if len(items[0]) <= 0:
             continue
@@ -79,7 +79,7 @@ def encode_sent(vocab, string, size):
 
 def load_train_list():
     trainList = []
-    for line in open('/export/jw/cnn/insuranceQA/train'):
+    for line in open('/export/jw/cnn/insuranceQA_old/train'):
         items = line.strip().split(' ')
         if items[0] == '1':
             trainList.append(line.strip().split(' '))
@@ -87,7 +87,7 @@ def load_train_list():
 
 def load_test_list():
     testList = []
-    for line in open('/export/jw/cnn/insuranceQA/test1'):
+    for line in open('/export/jw/cnn/insuranceQA_old/test1'):
         testList.append(line.strip().split(' '))
     return testList
 
@@ -152,7 +152,7 @@ def validation(validate_model, testList, vocab, batch_size):
         sdict[qid].append((score_list[index], items[0]))
         index += 1
     lev0, lev1 = float(0), float(0)
-    of = open('/export/jw/cnn/insuranceQA/acc.lstm', 'a')
+    of = open('/export/jw/cnn/insuranceQA_old/acc.lstm', 'a')
     for qid, cases in sdict.items():
         cases.sort(key=operator.itemgetter(0), reverse=True)
         score, flag = cases[0]

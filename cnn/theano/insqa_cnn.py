@@ -13,9 +13,9 @@ from theano.tensor.signal import pool
 from theano.tensor.nnet import conv2d
 
 #TODO change path to your dataset
-trainfile = '/export/jw/cnn/insuranceQA/train'
-test1file = '/export/jw/cnn/insuranceQA/test1'
-vectorsfile = '/export/jw/cnn/insuranceQA/vectors.nobin'
+trainfile = '/export/jw/cnn/insuranceQA_old/train'
+test1file = '/export/jw/cnn/insuranceQA_old/test1'
+vectorsfile = '/export/jw/cnn/insuranceQA_old/vectors.nobin'
 
 ###########################################################
 # read qa data

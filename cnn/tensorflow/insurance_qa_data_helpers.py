@@ -16,17 +16,17 @@ def build_vocab():
     vocab = {}
     vocab['UNKNOWN'] = code
     code += 1
-    for line in open('/export/jw/cnn/insuranceQA/train'):
+    for line in open('../../insuranceQA/train'):
         items = line.strip().split(' ')
-        for i in range(2, 3):
+        for i in range(2, 4):
             words = items[i].split('_')
             for word in words:
                 if not word in vocab:
                     vocab[word] = code
                     code += 1
-    for line in open('/export/jw/cnn/insuranceQA/test1'):
+    for line in open('../../insuranceQA/test1'):
         items = line.strip().split(' ')
-        for i in range(2, 3):
+        for i in range(2, 4):
             words = items[i].split('_')
             for word in words:
                 if not word in vocab:
@@ -40,7 +40,7 @@ def rand_qa(qalist):
 
 def read_alist():
     alist = []
-    for line in open('/export/jw/cnn/insuranceQA/train'):
+    for line in open('../../insuranceQA/train'):
         items = line.strip().split(' ')
         alist.append(items[3])
     print('read_alist done ......')
@@ -73,7 +73,7 @@ def vocab_plus_overlap(vectors, sent, over, size):
 
 def load_vectors():
     vectors = {}
-    for line in open('/export/jw/cnn/insuranceQA/vectors.nobin'):
+    for line in open('../../insuranceQA/vectors.nobin'):
         items = line.strip().split(' ')
         if (len(items) < 101):
             continue
@@ -93,14 +93,14 @@ def read_vector(vectors, word):
 
 def load_test_and_vectors():
     testList = []
-    for line in open('/export/jw/cnn/insuranceQA/test1'):
+    for line in open('../../insuranceQA/test1'):
         testList.append(line.strip())
     vectors = load_vectors()
     return testList, vectors
 
 def load_train_and_vectors():
     trainList = []
-    for line in open('/export/jw/cnn/insuranceQA/train'):
+    for line in open('../../insuranceQA/train'):
         trainList.append(line.strip())
     vectors = load_vectors()
     return trainList, vectors
@@ -117,7 +117,7 @@ def load_data_val_10(testList, vectors, index):
 
 def read_raw():
     raw = []
-    for line in open('/export/jw/cnn/insuranceQA/train'):
+    for line in open('../../insuranceQA/train'):
         items = line.strip().split(' ')
         if items[0] == '1':
             raw.append(items)
