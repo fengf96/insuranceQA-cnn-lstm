@@ -13,9 +13,9 @@ from theano.tensor.signal import pool
 from theano.tensor.nnet import conv2d
 
 #TODO change path to your dataset
-trainfile = '/export/jw/cnn/insuranceQA_old/train'
-test1file = '/export/jw/cnn/insuranceQA_old/test1'
-vectorsfile = '/export/jw/cnn/insuranceQA_old/vectors.nobin'
+trainfile = '../../insuranceQA/train'
+test1file = '../../insuranceQA/test1'
+vectorsfile = '../../insuranceQA/vectors.nobin'
 
 ###########################################################
 # read qa data
@@ -119,7 +119,7 @@ def validation(validate_model, testList, vocab, batch_size):
         index += batch_size
         if index >= len(testList):
             break
-        print 'Evaluation ' + str(index)
+        print ('Evaluation ' + str(index))
     sdict, index = {}, int(0)
     for items in testList:
         qid = items[1].split(':')[1]
@@ -135,7 +135,7 @@ def validation(validate_model, testList, vocab, batch_size):
             lev1 += 1
         if flag == '0':
             lev0 += 1
-    print 'top-1 precition: ' + str(lev1 / (lev0 + lev1))
+    print ('top-1 precition: ' + str(lev1 / (lev0 + lev1)))
 
 class QACnn(object):
   def __init__(self, input1, input2, input3, word_embeddings, batch_size, sequence_len, embedding_size, filter_sizes, num_filters, keep_prob):
@@ -240,8 +240,8 @@ def train():
     filter_sizes = [2,3,5]
     num_filters = 500
     embedding_size = 100
-    learning_rate = 0.001
-    n_epochs = 2000000
+    learning_rate = 0.1
+    n_epochs = 7000
     validation_freq = 1000
     keep_prob_value = 0.25
 
@@ -265,8 +265,7 @@ def train():
     dbg_outputs_1 = model.dbg_outputs_1
 
     cost, cos12, cos13 = model.cost, model.cos12, model.cos13
-    print 'cost'
-    print cost
+    print ('cost', cost)
     params, accuracy = model.params, model.accuracy
     grads = T.grad(cost, params)
 
@@ -303,9 +302,9 @@ def train():
         train_x1, train_x2, train_x3 = load_data(trainList, vocab, batch_size)
         #print train_x3.shape
         cost_ij, acc, dbg_x1, dbg_outputs_1 = train_model(train_x1, train_x2, train_x3, keep_prob_value)
-        print 'load data done ...... epoch:' + str(epoch) + ' cost:' + str(cost_ij) + ', acc:' + str(acc)
+        print ('load data done ...... epoch:' + str(epoch) + ' cost:' + str(cost_ij) + ', acc:' + str(acc))
         if epoch % validation_freq == 0:
-            print 'Evaluation ......'
+            print ('Evaluation ......')
             validation(validate_model, testList, vocab, batch_size)
         #print dbg_outputs_1
 

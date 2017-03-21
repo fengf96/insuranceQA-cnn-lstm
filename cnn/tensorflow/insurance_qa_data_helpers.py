@@ -11,12 +11,12 @@ zerovector = []
 for i in range(0, 10):
     zerovector.append(float(0))
 
-def build_vocab():
+def build_vocab(train_file, valid_file):
     code = int(0)
     vocab = {}
     vocab['UNKNOWN'] = code
     code += 1
-    for line in open('../../insuranceQA/train'):
+    for line in open(train_file):
         items = line.strip().split(' ')
         for i in range(2, 4):
             words = items[i].split('_')
@@ -24,7 +24,7 @@ def build_vocab():
                 if not word in vocab:
                     vocab[word] = code
                     code += 1
-    for line in open('../../insuranceQA/test1'):
+    for line in open(valid_file):
         items = line.strip().split(' ')
         for i in range(2, 4):
             words = items[i].split('_')
@@ -38,9 +38,9 @@ def rand_qa(qalist):
     index = random.randint(0, len(qalist) - 1)
     return qalist[index]
 
-def read_alist():
+def read_alist(train_file):
     alist = []
-    for line in open('../../insuranceQA/train'):
+    for line in open(train_file):
         items = line.strip().split(' ')
         alist.append(items[3])
     print('read_alist done ......')
@@ -71,17 +71,17 @@ def vocab_plus_overlap(vectors, sent, over, size):
         matrix.append(newvec)
     return matrix
 
-def load_vectors():
-    vectors = {}
-    for line in open('../../insuranceQA/vectors.nobin'):
-        items = line.strip().split(' ')
-        if (len(items) < 101):
-            continue
-        vec = []
-        for i in range(1, 101):
-            vec.append(float(items[i]))
-        vectors[items[0]] = vec
-    return vectors
+# def load_vectors():
+#     vectors = {}
+#     for line in open('../../insuranceQA/vectors.nobin'):
+#         items = line.strip().split(' ')
+#         if (len(items) < 101):
+#             continue
+#         vec = []
+#         for i in range(1, 101):
+#             vec.append(float(items[i]))
+#         vectors[items[0]] = vec
+#     return vectors
 
 def read_vector(vectors, word):
     global empty_vector
@@ -91,33 +91,32 @@ def read_vector(vectors, word):
         return empty_vector
         #return vectors['</s>']
 
-def load_test_and_vectors():
+def load_test_and_vectors(val_file):
     testList = []
-    for line in open('../../insuranceQA/test1'):
+    for line in open(val_file):
         testList.append(line.strip())
-    vectors = load_vectors()
-    return testList, vectors
+    return testList
 
-def load_train_and_vectors():
-    trainList = []
-    for line in open('../../insuranceQA/train'):
-        trainList.append(line.strip())
-    vectors = load_vectors()
-    return trainList, vectors
+# def load_train_and_vectors():
+#     trainList = []
+#     for line in open('../../insuranceQA/train'):
+#         trainList.append(line.strip())
+#     vectors = load_vectors()
+#     return trainList, vectors
 
-def load_data_val_10(testList, vectors, index):
-    x_train_1 = []
-    x_train_2 = []
-    x_train_3 = []
-    items = testList[index].split(' ')
-    x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
-    x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
-    x_train_3.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
-    return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
+# def load_data_val_10(testList, vectors, index):
+#     x_train_1 = []
+#     x_train_2 = []
+#     x_train_3 = []
+#     items = testList[index].split(' ')
+#     x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
+#     x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
+#     x_train_3.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
+#     return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
 
-def read_raw():
+def read_raw(train_file):
     raw = []
-    for line in open('../../insuranceQA/train'):
+    for line in open(train_file):
         items = line.strip().split(' ')
         if items[0] == '1':
             raw.append(items)
@@ -159,52 +158,52 @@ def load_data_val_6(testList, vocab, index, batch):
         x_train_3.append(encode_sent(vocab, items[3], 100))
     return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
 
-def load_data_9(trainList, vectors, size):
-    x_train_1 = []
-    x_train_2 = []
-    y_train = []
-    for i in range(0, size):
-        pos = trainList[random.randint(0, len(trainList) - 1)]
-        posItems = pos.strip().split(' ')
-        x_train_1.append(vocab_plus_overlap(vectors, posItems[2], posItems[3], 200))
-        x_train_2.append(vocab_plus_overlap(vectors, posItems[3], posItems[2], 200))
-        y_train.append([1, 0])
-        neg = trainList[random.randint(0, len(trainList) - 1)]
-        negItems = neg.strip().split(' ')
-        x_train_1.append(vocab_plus_overlap(vectors, posItems[2], negItems[3], 200))
-        x_train_2.append(vocab_plus_overlap(vectors, negItems[3], posItems[2], 200))
-        y_train.append([0, 1])
-    return np.array(x_train_1), np.array(x_train_2), np.array(y_train)
+# def load_data_9(trainList, vectors, size):
+#     x_train_1 = []
+#     x_train_2 = []
+#     y_train = []
+#     for i in range(0, size):
+#         pos = trainList[random.randint(0, len(trainList) - 1)]
+#         posItems = pos.strip().split(' ')
+#         x_train_1.append(vocab_plus_overlap(vectors, posItems[2], posItems[3], 200))
+#         x_train_2.append(vocab_plus_overlap(vectors, posItems[3], posItems[2], 200))
+#         y_train.append([1, 0])
+#         neg = trainList[random.randint(0, len(trainList) - 1)]
+#         negItems = neg.strip().split(' ')
+#         x_train_1.append(vocab_plus_overlap(vectors, posItems[2], negItems[3], 200))
+#         x_train_2.append(vocab_plus_overlap(vectors, negItems[3], posItems[2], 200))
+#         y_train.append([0, 1])
+#     return np.array(x_train_1), np.array(x_train_2), np.array(y_train)
 
-def load_data_val_9(testList, vectors, index):
-    x_train_1 = []
-    x_train_2 = []
-    items = testList[index].split(' ')
-    x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
-    x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
-    return np.array(x_train_1), np.array(x_train_2)
+# def load_data_val_9(testList, vectors, index):
+#     x_train_1 = []
+#     x_train_2 = []
+#     items = testList[index].split(' ')
+#     x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
+#     x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
+#     return np.array(x_train_1), np.array(x_train_2)
 
-def load_data_10(vectors, qalist, raw, size):
-    x_train_1 = []
-    x_train_2 = []
-    x_train_3 = []
-    items = raw[random.randint(0, len(raw) - 1)]
-    nega = rand_qa(qalist)
-    x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
-    x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
-    x_train_3.append(vocab_plus_overlap(vectors, nega, items[2], 200))
-    return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
+# def load_data_10(vectors, qalist, raw, size):
+#     x_train_1 = []
+#     x_train_2 = []
+#     x_train_3 = []
+#     items = raw[random.randint(0, len(raw) - 1)]
+#     nega = rand_qa(qalist)
+#     x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
+#     x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
+#     x_train_3.append(vocab_plus_overlap(vectors, nega, items[2], 200))
+#     return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
 
-def load_data_11(vectors, qalist, raw, size):
-    x_train_1 = []
-    x_train_2 = []
-    x_train_3 = []
-    items = raw[random.randint(0, len(raw) - 1)]
-    nega = rand_qa(qalist)
-    x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
-    x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
-    x_train_3.append(vocab_plus_overlap(vectors, nega, items[2], 200))
-    return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
+# def load_data_11(vectors, qalist, raw, size):
+#     x_train_1 = []
+#     x_train_2 = []
+#     x_train_3 = []
+#     items = raw[random.randint(0, len(raw) - 1)]
+#     nega = rand_qa(qalist)
+#     x_train_1.append(vocab_plus_overlap(vectors, items[2], items[3], 200))
+#     x_train_2.append(vocab_plus_overlap(vectors, items[3], items[2], 200))
+#     x_train_3.append(vocab_plus_overlap(vectors, nega, items[2], 200))
+#     return np.array(x_train_1), np.array(x_train_2), np.array(x_train_3)
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
     data = np.array(data)

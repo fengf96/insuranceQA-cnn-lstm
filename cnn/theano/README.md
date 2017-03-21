@@ -1,3 +1,4 @@
+top-1 precision: 0.8366666666666667 on test1 after 7000 epochs. Details see running_log.txt
 
 ================result==================
 theano and tensorflow cnn code for insuranceQA

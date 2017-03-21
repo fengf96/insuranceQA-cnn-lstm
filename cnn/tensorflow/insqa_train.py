@@ -24,10 +24,11 @@ tf.flags.DEFINE_float("dropout_keep_prob", 1.0, "Dropout keep probability (defau
 tf.flags.DEFINE_float("l2_reg_lambda", 0, "L2 regularizaion lambda (default: 0.0)")
 
 # Training parameters
+tf.flags.DEFINE_integer("seq_length", 200, "Sequence Length (default: 200)")
 tf.flags.DEFINE_integer("batch_size", 100, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 5000000, "Number of training epochs (default: 200)")
-tf.flags.DEFINE_integer("evaluate_every", 10, "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("checkpoint_every", 10, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("evaluate_every", 3000, "Evaluate model on dev set after this many steps (default: 100)")
+tf.flags.DEFINE_integer("checkpoint_every", 3000, "Save model after this many steps (default: 100)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
@@ -42,21 +43,18 @@ print("")
 # Data Preparatopn
 # ==================================================
 
+train_file = '../../insuranceQA/train'
+val_file = '../../insuranceQA/test1'
+precision = '../../insuranceQA/test1.acc'
+
 # Load data
 print("Loading data...")
 
-vocab = insurance_qa_data_helpers.build_vocab()
-alist = insurance_qa_data_helpers.read_alist()
-raw = insurance_qa_data_helpers.read_raw()
-x_train_1, x_train_2, x_train_3 = insurance_qa_data_helpers.load_data_6(vocab, alist, raw, FLAGS.batch_size)
-testList, vectors = insurance_qa_data_helpers.load_test_and_vectors()
-vectors = ''
-print('x_train_1', np.shape(x_train_1))
-print("Load done...")
+vocab = insurance_qa_data_helpers.build_vocab(train_file, val_file)
+alist = insurance_qa_data_helpers.read_alist(train_file)
+raw = insurance_qa_data_helpers.read_raw(train_file)
 
-val_file = '../../insuranceQA/test1'
-precision = '../../insuranceQA/test1.acc'
-# x_val, y_val = data_deepqa.load_data_val()
+print("Load done...")
 
 # Training
 # ==================================================
@@ -66,14 +64,14 @@ with tf.Graph().as_default():
         session_conf = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement,
-            device_count={'GPU': 0}
+            #device_count={'GPU': 0}
         )
         session_conf.gpu_options.allow_growth = True
 
         sess = tf.Session(config=session_conf)
         with sess.as_default():
             cnn = InsQACNN(
-                sequence_length=x_train_1.shape[1],
+                sequence_length=FLAGS.seq_length,
                 batch_size=FLAGS.batch_size,
                 vocab_size=len(vocab),
                 embedding_size=FLAGS.embedding_dim,
@@ -158,6 +156,7 @@ with tf.Graph().as_default():
 
 
             def dev_step():
+                testList = insurance_qa_data_helpers.load_test_and_vectors(val_file)
                 scoreList = []
                 i = int(0)
                 while True:
@@ -200,6 +199,7 @@ with tf.Graph().as_default():
                 of.write('lev0:' + str(lev0) + '\n')
                 print('lev1 ' + str(lev1))
                 print('lev0 ' + str(lev0))
+                print("top-1 accuracy: %s" % (lev1 * 1.0/(lev1+lev0)))
                 of.close()
 
             print("start...")

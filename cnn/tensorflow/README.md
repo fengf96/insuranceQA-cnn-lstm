@@ -1,3 +1,6 @@
+top-1 precision: 0.8872222222222222 on test1 after 6000 epochs. Details see running_log.txt
+This result is unbelievably good, way better than the state-of-art in https://arxiv.org/pdf/1511.04108.pdf, which is 0.68. I don't see any major flaws in author's code; but if you do, please let me know
+
 
 ================result==================
 
