@@ -3,6 +3,7 @@
 import datetime
 import operator
 import os
+import pdb
 import time
 
 import insurance_qa_data_helpers
@@ -25,8 +26,8 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0, "L2 regularizaion lambda (default: 0.0
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 100, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 5000000, "Number of training epochs (default: 200)")
-tf.flags.DEFINE_integer("evaluate_every", 3000, "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("checkpoint_every", 3000, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("evaluate_every", 10, "Evaluate model on dev set after this many steps (default: 100)")
+tf.flags.DEFINE_integer("checkpoint_every", 10, "Save model after this many steps (default: 100)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
@@ -53,8 +54,8 @@ vectors = ''
 print('x_train_1', np.shape(x_train_1))
 print("Load done...")
 
-val_file = '/export/jw/cnn/insuranceQA_old/test1'
-precision = '/export/jw/cnn/insuranceQA_old/test1.acc'
+val_file = '../../insuranceQA/test1'
+precision = '../../insuranceQA/test1.acc'
 # x_val, y_val = data_deepqa.load_data_val()
 
 # Training
@@ -98,8 +99,8 @@ with tf.Graph().as_default():
             grad_summaries_merged = tf.summary.merge(grad_summaries)
 
             # Output directory for models and summaries
-            timestamp = str(int(time.time()))
-            out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
+            # timestamp = str(int(time.time()))
+            out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs"))
             print("Writing to {}\n".format(out_dir))
 
             # Summaries for loss and accuracy
@@ -121,7 +122,18 @@ with tf.Graph().as_default():
             checkpoint_prefix = os.path.join(checkpoint_dir, "model")
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
+
             saver = tf.train.Saver(tf.global_variables())
+            ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+            # ckpt.model_checkpoint_path ="./big_models/chat_bot.ckpt-183600"
+            # print ckpt.model_checkpoint_path
+            if ckpt and ckpt.model_checkpoint_path:
+                print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+                saver.restore(sess, ckpt.model_checkpoint_path)
+            else:
+                print("model file not loaded correctly. Start fresh new model")
+
+
 
             # Initialize all variables
             sess.run(tf.global_variables_initializer())
@@ -190,6 +202,7 @@ with tf.Graph().as_default():
                 print('lev0 ' + str(lev0))
                 of.close()
 
+            print("start...")
 
             # Generate batches
             # Training loop. For each batch...
@@ -199,12 +212,13 @@ with tf.Graph().as_default():
                                                                                             FLAGS.batch_size)
                     train_step(x_batch_1, x_batch_2, x_batch_3)
                     current_step = tf.train.global_step(sess, global_step)
+                    if current_step % FLAGS.checkpoint_every == 0:
+                        path = saver.save(sess, checkpoint_prefix, global_step=current_step)
+                        print("Saved model checkpoint to {}\n".format(path))
                     if current_step % FLAGS.evaluate_every == 0:
                         print("\nEvaluation:")
                         dev_step()
                         print("")
-                    if current_step % FLAGS.checkpoint_every == 0:
-                        path = saver.save(sess, checkpoint_prefix, global_step=current_step)
-                        print("Saved model checkpoint to {}\n".format(path))
+
                 except Exception as e:
                     print(e)
