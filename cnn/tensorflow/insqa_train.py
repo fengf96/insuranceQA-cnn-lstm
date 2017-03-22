@@ -9,7 +9,7 @@ import time
 import insurance_qa_data_helpers
 import numpy as np
 import tensorflow as tf
-from insqa_cnn import InsQACNN
+from insqa_cnn2 import InsQACNN
 
 # print tf.__version__
 
@@ -64,7 +64,7 @@ with tf.Graph().as_default():
         session_conf = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement,
-            #device_count={'GPU': 0}
+            device_count={'GPU': 0}
         )
         session_conf.gpu_options.allow_growth = True
 
