@@ -49,18 +49,18 @@ class InsQALSTMCNN(object):
         preprocessed_2 = preprocess_BiRNN(self.embedded_chars_2)
         preprocessed_3 = preprocess_BiRNN(self.embedded_chars_3)
 
-        lstm_fw_cell = BasicLSTMCell(embedding_size // 2, forget_bias=1.0)
-        lstm_bw_cell = BasicLSTMCell(embedding_size // 2, forget_bias=1.0)
 
+        def mybilstm(preprocessed_x):
+            lstm_fw_cell = BasicLSTMCell(embedding_size // 2, forget_bias=1.0)
+            lstm_bw_cell = BasicLSTMCell(embedding_size // 2, forget_bias=1.0)
+            outputs, _, _ = static_bidirectional_rnn(lstm_fw_cell, lstm_bw_cell, preprocessed_x, dtype=tf.float32)
+            return outputs
 
-        def mybilstm(preprocessed_x, reuse):
-            with tf.variable_scope("lstm", reuse=reuse) as s:
-                outputs, _, _ = static_bidirectional_rnn(lstm_fw_cell, lstm_bw_cell, preprocessed_x, dtype=tf.float32, scope=s)
-                return outputs
-
-        outputs_1 = mybilstm(preprocessed_1, reuse=False)
-        outputs_2 = mybilstm(preprocessed_2, reuse=True)
-        outputs_3 = mybilstm(preprocessed_3, reuse=True)
+        with tf.variable_scope("my_bidirectional_lstm") as s:
+            outputs_1 = mybilstm(preprocessed_1)
+            s.reuse_variables()
+            outputs_2 = mybilstm(preprocessed_2)
+            outputs_3 = mybilstm(preprocessed_3)
         outputs_1 = tf.stack(outputs_1)
         outputs_1 = tf.transpose(outputs_1, [1, 0, 2])
         outputs_2 = tf.stack(outputs_2)
