@@ -17,13 +17,22 @@ cd ../../insuranceQA-cnn-lstm
 PYTHONPATH=. python3 cnn/tensorflow/insqa_train.py
 ```
 
-To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
+To Run the code of LSTM-CNN (this code is in "cleaner" branch) on tensorflow, please install Tensorflow 1.0, and then
 ```
 cd ../../insuranceQA-cnn-lstm
 PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py
 ```
 
-The performance of the code runs unexpectedly well, so I wonder if the original author or I made some mistakes. If you find out the problem and point it out, it will be much appreciated. The original author included word2vec embeddings in his repo, but he did't actually use it, so I just removed it. The word embeddings are randomly initialized.
+The performance of the code runs unexpectedly well, so I wonder if the original author or I made some mistakes. If you find out the problem and point it out, it will be much appreciated (running logs can be found in each folder). The original author included word2vec embeddings in his repo, but he did't actually use it, so I just removed it. The word embeddings are randomly initialized.
+
+My Accuracy:
+| Tool          | Method        | Top-1 Accuracy  |
+| ------------- |:-------------:| ---------------:|
+| Tensorflow    | CNN           | 0.88            |
+| Theano        | CNN           | 0.83            |
+| Tensorflow    | LSTM-CNN      | 0.80            |
+| Theano        | LSTM-CNN      | haven't run     |
+
 
 -------------from Orignal Author-----------------------------------
 
