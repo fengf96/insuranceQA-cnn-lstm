@@ -1,11 +1,23 @@
-forked from here https://github.com/white127/insuranceQA-cnn-lstm
-fixed some minor bugs, remove extra code from author's original code.
-upgrated with tensorflow 1.0
-put the original dataset here and convert it to author's proposed format
-Run python3 generate_dataset_for_insuranceQA.py
-the pythonic dataset is coming from https://github.com/codekansas/insurance_qa_python
+Originally forked from here https://github.com/white127/insuranceQA-cnn-lstm
 --------------------------------
 
+Fixed some minor bugs, remove extra code from author's original code.
+Upgrated with tensorflow 1.0
+Put the original dataset here and convert it to author's proposed format
+Run python3 generate_dataset_for_insuranceQA.py
+The pythonic dataset originally comes from https://github.com/codekansas/insurance_qa_python
+
+To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
+cd insuranceQA-cnn-lstm
+PYTHONPATH=. python3 cnn/tensorflow/insqa_train.py
+
+To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
+cd insuranceQA-cnn-lstm
+PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py
+
+The performance of the code runs unexpectedly well, so I wonder if the original author or I made some mistakes. If you find out the problem and point it out, it will be much appreciated. The original author included word2vec embeddings in his repo, but he did't actually use it, so I just removed it. The word embeddings are randomly initialized.
+
+-------------from Orignal Author-----------------------------------
 
 See theano and tensorflow folder
 
