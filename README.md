@@ -7,15 +7,18 @@ Originally forked from here https://github.com/white127/insuranceQA-cnn-lstm
 
 Before running code, you need to convert the original dataset to author's proposed format
 ```cd insurance_qa_python
-python3 generate_dataset_for_insuranceQA.py```
+python3 generate_dataset_for_insuranceQA.py
+```
 
 To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
 ```cd ../../insuranceQA-cnn-lstm
-PYTHONPATH=. python3 cnn/tensorflow/insqa_train.py```
+PYTHONPATH=. python3 cnn/tensorflow/insqa_train.py
+```
 
 To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
 ```cd ../../insuranceQA-cnn-lstm
-PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py```
+PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py
+```
 
 The performance of the code runs unexpectedly well, so I wonder if the original author or I made some mistakes. If you find out the problem and point it out, it will be much appreciated. The original author included word2vec embeddings in his repo, but he did't actually use it, so I just removed it. The word embeddings are randomly initialized.
 
