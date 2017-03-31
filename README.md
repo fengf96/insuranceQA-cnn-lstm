@@ -6,17 +6,20 @@ Originally forked from here https://github.com/white127/insuranceQA-cnn-lstm
 * The pythonic dataset originally comes from https://github.com/codekansas/insurance_qa_python
 
 Before running code, you need to convert the original dataset to author's proposed format
-```cd insurance_qa_python
+```
+cd insurance_qa_python
 python3 generate_dataset_for_insuranceQA.py
 ```
 
 To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
-```cd ../../insuranceQA-cnn-lstm
+```
+cd ../../insuranceQA-cnn-lstm
 PYTHONPATH=. python3 cnn/tensorflow/insqa_train.py
 ```
 
 To Run the code of CNN on tensorflow, please install Tensorflow 1.0, and then
-```cd ../../insuranceQA-cnn-lstm
+```
+cd ../../insuranceQA-cnn-lstm
 PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py
 ```
 
