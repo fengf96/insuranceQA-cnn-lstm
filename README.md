@@ -26,6 +26,7 @@ PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py
 The performance of the code runs unexpectedly well, so I wonder if the original author or I made some mistakes. If you find out the problem and point it out, it will be much appreciated (running logs can be found in each folder). The original author included word2vec embeddings in his repo, but he did't actually use it, so I just removed it. The word embeddings are randomly initialized.
 
 My Accuracy:
+
 | Tool          | Method        | Top-1 Accuracy  |
 | ------------- |:-------------:| ---------------:|
 | Tensorflow    | CNN           | 0.88            |
