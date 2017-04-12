@@ -53,6 +53,6 @@ with open("../insuranceQA/test1", "w") as f:
                 bad_answer_words += ["<a>"] * (200 - len(bad_answer_words))
             else:
                 bad_answer_words = bad_answer_words[:200]
-                f.write("0 qid:%s %s %s\n" % (i, "_".join(question_words), "_".join(bad_answer_words)))
+            f.write("0 qid:%s %s %s\n" % (i, "_".join(question_words), "_".join(bad_answer_words)))
 
 pdb.set_trace()
