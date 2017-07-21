@@ -1,20 +1,13 @@
 #! /usr/bin/env python3.4
 
-import datetime
 import operator
 import os
-import pdb
-import time
 
-import insurance_qa_data_helpers
-import numpy as np
 import tensorflow as tf
-from insqa_cnn2 import InsQACNN
-
-# print tf.__version__
-
-# Parameters
-# ==================================================
+# from cnn.tensorflow import insurance_qa_data_helpers
+from cnn.tensorflow.insqa_cnn import InsQACNN
+from cnn.tensorflow.insurance_qa_data_helpers import read_raw, read_alist_answers, build_vocab, load_test, \
+    load_data_val_6, load_data_6
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 100, "Dimensionality of character embedding (default: 128)")
@@ -23,12 +16,18 @@ tf.flags.DEFINE_integer("num_filters", 500, "Number of filters per filter size (
 tf.flags.DEFINE_float("dropout_keep_prob", 1.0, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 0, "L2 regularizaion lambda (default: 0.0)")
 
+# Train/Test/Vocabulary file
+tf.flags.DEFINE_string("train_file", '../../insuranceQA/train', "Training file")
+tf.flags.DEFINE_string("val_file", '../../insuranceQA/test1', "Validation file")
+tf.flags.DEFINE_string("precision_file", '../../insuranceQA/test1.acc', "Precision file")
+tf.flags.DEFINE_string("glove_path", "../../insuranceQA/glove.6B.100d.txt", "glove_path")
+
 # Training parameters
 tf.flags.DEFINE_integer("seq_length", 200, "Sequence Length (default: 200)")
 tf.flags.DEFINE_integer("batch_size", 100, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 5000000, "Number of training epochs (default: 200)")
-tf.flags.DEFINE_integer("evaluate_every", 3000, "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("checkpoint_every", 3000, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("num_steps", 5000000, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("evaluate_every", 6000, "Evaluate model on dev set after this many steps (default: 100)")
+tf.flags.DEFINE_integer("checkpoint_every", 6000, "Save model after this many steps (default: 100)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
@@ -40,185 +39,121 @@ for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value))
 print("")
 
+
 # Data Preparatopn
 # ==================================================
 
-train_file = '../../insuranceQA/train'
-val_file = '../../insuranceQA/test1'
-precision = '../../insuranceQA/test1.acc'
+
+def evaluate_model(model, session):
+    testList = load_test(FLAGS.val_file)
+    scoreList = []
+    i = int(0)
+    while True:
+        x_test_1, x_test_2, x_test_3 = load_data_val_6(testList, vocab, i,
+                                                       FLAGS.batch_size)
+        batch_scores = model.dev_step(x_test_1, x_test_2, x_test_3, session)
+        for score in batch_scores[0]:
+            scoreList.append(score)
+        i += FLAGS.batch_size
+        if i >= len(testList):
+            break
+    sessdict = {}
+    index = int(0)
+    for line in open(FLAGS.val_file):
+        items = line.strip().split(' ')
+        qid = items[1].split(':')[1]
+        if not qid in sessdict:
+            sessdict[qid] = []
+        sessdict[qid].append((scoreList[index], items[0]))
+        index += 1
+        if index >= len(testList):
+            break
+    lev1 = float(0)
+    lev0 = float(0)
+    of = open(FLAGS.precision_file, 'a')
+    for k, v in sessdict.items():
+        v.sort(key=operator.itemgetter(0), reverse=True)
+        score, flag = v[0]
+        if flag == '1':
+            lev1 += 1
+        if flag == '0':
+            lev0 += 1
+    of.write('lev1:' + str(lev1) + '\n')
+    of.write('lev0:' + str(lev0) + '\n')
+    print('lev1 ' + str(lev1))
+    print('lev0 ' + str(lev0))
+    print("top-1 accuracy: %s" % (lev1 * 1.0 / (lev1 + lev0)))
+    of.close()
+
+
+def create_model(session):
+    model = InsQACNN(
+        sequence_length=FLAGS.seq_length,
+        batch_size=FLAGS.batch_size,
+        d_word2idx=vocab,
+        embedding_size=FLAGS.embedding_dim,
+        filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
+        num_filters=FLAGS.num_filters,
+        glove_path=FLAGS.glove_path
+    )
+    print("Writing to {}\n".format(out_dir))
+
+    ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+    if ckpt and ckpt.model_checkpoint_path:
+        print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+        model.saver.restore(sess, ckpt.model_checkpoint_path)
+    else:
+        print("model file not loaded correctly. Start fresh new model")
+        # Initialize all variables
+        session.run(tf.global_variables_initializer())
+    return model
+
+
+# Training
+# ==================================================
+out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs"))
+# Checkpoint directory. tensorflow assumes this directory already exists so we need to create it
+checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
 
 # Load data
 print("Loading data...")
 
-vocab = insurance_qa_data_helpers.build_vocab(train_file, val_file)
-alist = insurance_qa_data_helpers.read_alist(train_file)
-raw = insurance_qa_data_helpers.read_raw(train_file)
+vocab = build_vocab(FLAGS.train_file, FLAGS.val_file)
+vocab_size = len(vocab)
+alist_answers = read_alist_answers(FLAGS.train_file)
+raw = read_raw(FLAGS.train_file)
 
 print("Load done...")
 
-# Training
-# ==================================================
+with tf.device("/gpu:0"):
+    session_conf = tf.ConfigProto(
+        allow_soft_placement=FLAGS.allow_soft_placement,
+        log_device_placement=FLAGS.log_device_placement,
+        # device_count={'GPU': 0} uncomment if you have a GPU but don't want to use it
+    )
+    session_conf.gpu_options.allow_growth = True
 
-with tf.Graph().as_default():
-    with tf.device("/gpu:1"):
-        session_conf = tf.ConfigProto(
-            allow_soft_placement=FLAGS.allow_soft_placement,
-            log_device_placement=FLAGS.log_device_placement,
-            device_count={'GPU': 0}
-        )
-        session_conf.gpu_options.allow_growth = True
+    with tf.Session(config=session_conf) as sess:
+        model = create_model(sess)
 
-        sess = tf.Session(config=session_conf)
-        with sess.as_default():
-            cnn = InsQACNN(
-                sequence_length=FLAGS.seq_length,
-                batch_size=FLAGS.batch_size,
-                vocab_size=len(vocab),
-                embedding_size=FLAGS.embedding_dim,
-                filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
-                num_filters=FLAGS.num_filters,
-                l2_reg_lambda=FLAGS.l2_reg_lambda)
+        print("start...")
 
-            # Define Training procedure
-            global_step = tf.Variable(0, name="global_step", trainable=False)
-            optimizer = tf.train.AdamOptimizer(1e-1)
-            # optimizer = tf.train.GradientDescentOptimizer(1e-2)
-            grads_and_vars = optimizer.compute_gradients(cnn.loss)
-            train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
+        # Generate batches
+        # Training loop. For each batch...
+        for n_step in range(FLAGS.num_steps):
+            try:
+                x_batch_1, x_batch_2, x_batch_3 = load_data_6(vocab, alist_answers, raw,
+                                                              FLAGS.batch_size)
+                model.train_step(x_batch_1, x_batch_2, x_batch_3, sess, n_step)
+                if (n_step + 1) % FLAGS.checkpoint_every == 0:
+                    path = model.saver.save(sess, checkpoint_dir, global_step=n_step)
+                    print("Saved model checkpoint to {}\n".format(path))
+                if (n_step + 1) % FLAGS.evaluate_every == 0:
+                    print("\nEvaluation:")
+                    evaluate_model(model, sess)
+                    print("")
 
-            # Keep track of gradient values and sparsity (optional)
-            grad_summaries = []
-            for g, v in grads_and_vars:
-                if g is not None:
-                    grad_hist_summary = tf.summary.histogram("{}/grad/hist".format(v.name), g)
-                    sparsity_summary = tf.summary.scalar("{}/grad/sparsity".format(v.name), tf.nn.zero_fraction(g))
-                    grad_summaries.append(grad_hist_summary)
-                    grad_summaries.append(sparsity_summary)
-            grad_summaries_merged = tf.summary.merge(grad_summaries)
-
-            # Output directory for models and summaries
-            # timestamp = str(int(time.time()))
-            out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs"))
-            print("Writing to {}\n".format(out_dir))
-
-            # Summaries for loss and accuracy
-            loss_summary = tf.summary.scalar("loss", cnn.loss)
-            acc_summary = tf.summary.scalar("accuracy", cnn.accuracy)
-
-            # Train Summaries
-            train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
-            train_summary_dir = os.path.join(out_dir, "summaries", "train")
-            train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
-
-            # Dev summaries
-            dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
-            dev_summary_dir = os.path.join(out_dir, "summaries", "dev")
-            dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, sess.graph)
-
-            # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
-            checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
-            checkpoint_prefix = os.path.join(checkpoint_dir, "model")
-            if not os.path.exists(checkpoint_dir):
-                os.makedirs(checkpoint_dir)
-
-            saver = tf.train.Saver(tf.global_variables())
-            ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
-            # ckpt.model_checkpoint_path ="./big_models/chat_bot.ckpt-183600"
-            # print ckpt.model_checkpoint_path
-            if ckpt and ckpt.model_checkpoint_path:
-                print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-                saver.restore(sess, ckpt.model_checkpoint_path)
-            else:
-                print("model file not loaded correctly. Start fresh new model")
-
-
-
-            # Initialize all variables
-            sess.run(tf.global_variables_initializer())
-
-
-            def train_step(x_batch_1, x_batch_2, x_batch_3):
-                """
-                A single training step
-                """
-                feed_dict = {
-                    cnn.input_x_1: x_batch_1,
-                    cnn.input_x_2: x_batch_2,
-                    cnn.input_x_3: x_batch_3,
-                    cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
-                }
-                _, step, summaries, loss, accuracy = sess.run(
-                    [train_op, global_step, train_summary_op, cnn.loss, cnn.accuracy],
-                    feed_dict)
-                time_str = datetime.datetime.now().isoformat()
-                print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
-                train_summary_writer.add_summary(summaries, step)
-
-
-            def dev_step():
-                testList = insurance_qa_data_helpers.load_test_and_vectors(val_file)
-                scoreList = []
-                i = int(0)
-                while True:
-                    x_test_1, x_test_2, x_test_3 = insurance_qa_data_helpers.load_data_val_6(testList, vocab, i,
-                                                                                             FLAGS.batch_size)
-                    feed_dict = {
-                        cnn.input_x_1: x_test_1,
-                        cnn.input_x_2: x_test_2,
-                        cnn.input_x_3: x_test_3,
-                        cnn.dropout_keep_prob: 1.0
-                    }
-                    batch_scores = sess.run([cnn.cos_12], feed_dict)
-                    for score in batch_scores[0]:
-                        scoreList.append(score)
-                    i += FLAGS.batch_size
-                    if i >= len(testList):
-                        break
-                sessdict = {}
-                index = int(0)
-                for line in open(val_file):
-                    items = line.strip().split(' ')
-                    qid = items[1].split(':')[1]
-                    if not qid in sessdict:
-                        sessdict[qid] = []
-                    sessdict[qid].append((scoreList[index], items[0]))
-                    index += 1
-                    if index >= len(testList):
-                        break
-                lev1 = float(0)
-                lev0 = float(0)
-                of = open(precision, 'a')
-                for k, v in sessdict.items():
-                    v.sort(key=operator.itemgetter(0), reverse=True)
-                    score, flag = v[0]
-                    if flag == '1':
-                        lev1 += 1
-                    if flag == '0':
-                        lev0 += 1
-                of.write('lev1:' + str(lev1) + '\n')
-                of.write('lev0:' + str(lev0) + '\n')
-                print('lev1 ' + str(lev1))
-                print('lev0 ' + str(lev0))
-                print("top-1 accuracy: %s" % (lev1 * 1.0/(lev1+lev0)))
-                of.close()
-
-            print("start...")
-
-            # Generate batches
-            # Training loop. For each batch...
-            for i in range(FLAGS.num_epochs):
-                try:
-                    x_batch_1, x_batch_2, x_batch_3 = insurance_qa_data_helpers.load_data_6(vocab, alist, raw,
-                                                                                            FLAGS.batch_size)
-                    train_step(x_batch_1, x_batch_2, x_batch_3)
-                    current_step = tf.train.global_step(sess, global_step)
-                    if current_step % FLAGS.checkpoint_every == 0:
-                        path = saver.save(sess, checkpoint_prefix, global_step=current_step)
-                        print("Saved model checkpoint to {}\n".format(path))
-                    if current_step % FLAGS.evaluate_every == 0:
-                        print("\nEvaluation:")
-                        dev_step()
-                        print("")
-
-                except Exception as e:
-                    print(e)
+            except Exception as e:
+                print(e)

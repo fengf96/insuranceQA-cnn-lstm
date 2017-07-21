@@ -1,8 +1,9 @@
+InsuranceQA using CNN and LSTM
+-------
 Originally forked from here https://github.com/white127/insuranceQA-cnn-lstm
---------------------------------
 
 * Fixed some minor bugs, remove extra code from author's original code.
-* Upgrated with tensorflow 1.0
+* Upgrated with tensorflow 1.2 (>= 1.0)
 * The pythonic dataset originally comes from https://github.com/codekansas/insurance_qa_python
 
 Before running code, you need to convert the original dataset to author's proposed format
@@ -23,16 +24,19 @@ cd ../../insuranceQA-cnn-lstm
 PYTHONPATH=. python3 lstm_cnn/tensorflow/insqa_train.py
 ```
 
-The performance of the code runs unexpectedly well, so I wonder if the original author or I made some mistakes. If you find out the problem and point it out, it will be much appreciated (running logs can be found in each folder). The original author included word2vec embeddings in his repo, but he did't actually use it, so I just removed it. The word embeddings are randomly initialized.
-
 My Accuracy:
 
 | Tool          | Method        | Top-1 Accuracy  |
 | ------------- |:-------------:| ---------------:|
-| Tensorflow    | CNN           | 0.88            |
-| Theano        | CNN           | 0.83            |
-| Tensorflow    | LSTM-CNN      | 0.80            |
-| Theano        | LSTM-CNN      | haven't run     |
+| Tensorflow    | CNN           |    0.58         |
+| Theano        | CNN           |    -            |
+| Tensorflow    | LSTM-CNN      |    -            |
+| Theano        | LSTM-CNN      |    -            |
+
+解释一下为什么代码和原作者跑出来的不一样，有一个很大的原因是因为数据的negative sample是随机产生的，很容易产生太多毫无关系的负样本。
+只有负样本和正样本够接近才利于模型学到pattern，而如果负样本太过随机那模型的准确率也会时高时低。
+
+一个解决这个问题的方法是用tf-idf来产生candidates，这也是insuranceQA的原作者在V2使用的方法https://github.com/shuzi/insuranceQA
 
 
 -------------from Orignal Author-----------------------------------

@@ -1,3 +1,4 @@
+import datetime
 import tensorflow as tf
 
 
@@ -19,7 +20,7 @@ class InsQALSTMCNN(object):
         self.input_x_2 = tf.placeholder(tf.int32, [batch_size, sequence_length], name="input_x_2")
         # 负向问题
         self.input_x_3 = tf.placeholder(tf.int32, [batch_size, sequence_length], name="input_x_3")
-        self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
+        self.dropout_keep_prob = 0.1 # tf.placeholder(tf.float32, name="dropout_keep_prob")
         l2_loss = tf.constant(0.0)
         print("input_x_1 ", self.input_x_1)
 
@@ -160,3 +161,38 @@ class InsQALSTMCNN(object):
         with tf.name_scope("accuracy"):
             self.correct = tf.equal(zero, self.losses)
             self.accuracy = tf.reduce_mean(tf.cast(self.correct, "float"), name="accuracy")
+
+        # Define Training procedure
+        self.optimizer = tf.train.AdamOptimizer(1e-1)
+        self.train_op = self.optimizer.minimize(self.loss)
+
+        # Summaries for loss and accuracy
+        loss_summary = tf.summary.scalar("loss", self.loss)
+        acc_summary = tf.summary.scalar("accuracy", self.accuracy)
+        # Dev summaries
+        self.dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
+        self.saver = tf.train.Saver(tf.global_variables())
+
+    def train_step(self, x_batch_1, x_batch_2, x_batch_3, sess, step):
+        """
+        A single training step
+        """
+        feed_dict = {
+            self.input_x_1: x_batch_1,
+            self.input_x_2: x_batch_2,
+            self.input_x_3: x_batch_3
+        }
+        _, loss, accuracy = sess.run(
+            [self.train_op, self.loss, self.accuracy],
+            feed_dict)
+        time_str = datetime.datetime.now().isoformat()
+        print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
+
+    def dev_step(self, x_test_1, x_test_2, x_test_3, sess):
+        feed_dict = {
+            self.input_x_1: x_test_1,
+            self.input_x_2: x_test_2,
+            self.input_x_3: x_test_3
+        }
+        batch_scores = sess.run([self.cos_12], feed_dict)
+        return batch_scores

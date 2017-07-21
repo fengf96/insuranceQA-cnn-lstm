@@ -1,4 +1,3 @@
-Please checkout the "cleaner" branch of this repo.. The code and logs are stored there.
 
 ================result==================
 

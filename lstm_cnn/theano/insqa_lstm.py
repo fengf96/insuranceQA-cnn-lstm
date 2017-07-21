@@ -143,7 +143,7 @@ def validation(validate_model, testList, vocab, batch_size):
         index += batch_size
         if index >= len(testList):
             break
-        print 'Evaluation ' + str(index)
+        print ('Evaluation ' + str(index))
     sdict, index = {}, int(0)
     for items in testList:
         qid = items[1].split(':')[1]
@@ -164,8 +164,8 @@ def validation(validate_model, testList, vocab, batch_size):
         of.write(str(s) + '\n')
     of.write('lev1:' + str(lev1) + '\n')
     of.write('lev0:' + str(lev0) + '\n')
-    print 'lev1:' + str(lev1)
-    print 'lev0:' + str(lev0)
+    print ('lev1:' + str(lev1))
+    print ('lev0:' + str(lev0))
     of.close()
 
 def ortho_weight(ndim):
@@ -419,9 +419,9 @@ def train():
         #print('train_x1, train_x2, train_x3')
         #print(train_x1.shape, train_x2.shape, train_x3.shape)
         cost_ij, acc = train_model(train_x1, train_x2, train_x3, mask1, mask2, mask3)
-        print 'load data done ...... epoch:' + str(epoch) + ' cost:' + str(cost_ij) + ', acc:' + str(acc)
+        print ('load data done ...... epoch:' + str(epoch) + ' cost:' + str(cost_ij) + ', acc:' + str(acc))
         if epoch % validation_freq == 0:
-            print 'Evaluation ......'
+            print ('Evaluation ......')
             validation(validate_model, testList, vocab, batch_size)
 
 if __name__ == '__main__':
